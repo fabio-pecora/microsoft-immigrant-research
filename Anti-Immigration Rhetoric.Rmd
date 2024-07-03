@@ -1,6 +1,6 @@
 ---
 title: "DS3 projects"
-author: "Matthew Munoz and Fabio Pecora"
+author: "Fabio Pecora and Matthew Munoz"
 output: html_document
 date: "2024-06-24"
 ---
@@ -23,7 +23,7 @@ library(stringr)
 
 ### If original research data is desired change the eval = FALSE in the following chunk then alter the subsequent chuck to eval = TRUE.
 
-```{r download csv files eval=TRUE}
+```{r download_csv_files, eval=TRUE}
 report <- read.csv("google-trends data/replicate data/report.csv")
 crime <- read.csv("google-trends data/replicate data/crime.csv")
 welfare <- read.csv("google-trends data/replicate data/welfare.csv")
@@ -33,10 +33,10 @@ colnames(crime) <- c("ym","trends")
 colnames(welfare) <- c("ym","trends")
 ```
 
-```{r only for the og dataset eval=FALSE}
-report <- read.csv("google-trends data/original research data/report.csv")
-crime <- read.csv("google-trends data/original research data/crime.csv")
-welfare <- read.csv("google-trends data/original research data/welfare.csv")
+```{r only_for_the_og_dataset, eval=FALSE}
+report <- read.csv("google-trends data/original research data/google_trends_report.csv")
+crime <- read.csv("google-trends data/original research data3/google_trends_crime.csv")
+welfare <- read.csv("google-trends data/original research data/google_trends_welfare.csv")
 
 colnames(report) <- c("y", "m" ,"trends")
 colnames(crime) <- c("y", "m","trends")
@@ -52,7 +52,7 @@ crime <- crime |> select(ym, trends)
 welfare <- welfare |> select(ym, trends)
 ```
 
-### functions for table and figure replication
+### The following functions will be used to change a char date to a date format, add the president to a dataset, and use binary indicators to identify presidents.
 
 ```{r function to change year-month to year-month-date}
 add_date <- function(df) {
@@ -101,7 +101,7 @@ plot_4 <- function(df, start, end) {
 }
 ```
 
-## runnning above gunction
+## Data Preparation:
 
 ```{r add date to data frames}
 report <- add_date(report) 
@@ -115,17 +115,21 @@ crime <- add_pres(crime)
 welfare <- add_pres(welfare)
 ```
 
-```{r add president column to each vector}
+```{r add cinary trnslation of president}
 report <- zero_or_one(report)
 crime <- zero_or_one(crime) 
 welfare <- zero_or_one(welfare)
 ```
+
+## Plotting Google Trends Data:
 
 ```{r trends plot}
 plot_4(report, 0, 100)
 plot_4(crime, 0, 100)
 plot_4(welfare, 0, 100)
 ```
+
+## Regression Analysis:
 
 ```{r regression model}
 fit.report <- lm(trends~ymd+bush+trump+obama, data=report |> filter(trends > 0))
@@ -136,13 +140,17 @@ summary(fit.crime)
 summary(fit.welfare)
 ```
 
+## Tropic Model:
+
 ```{r topic model}
-load("TopicModel.RData")
+load("topic_model_lite.Rdata")
 document_topics <- make.dt(immigrFit, meta = out$meta)
 topic_terms <- t(exp(immigrFit$beta$logbeta[[1]]))
 rownames(topic_terms) <- out$vocab
 colnames(topic_terms) <- sprintf("Topic%d", 1:ncol(topic_terms))
 ```
+
+## Plotting Immigration News Segments:
 
 ```{r prep for figures 2 and 3}
 document_topics <- document_topics |> 
@@ -158,6 +166,8 @@ date2 <- as.Date("2017-01-01")
 
 my_colors <- c("magenta", "red3", "blue")
 ```
+
+## Organizing the new segment:
 
 ```{r creating figure 2}
 plot_2_table <- document_topics |> 
@@ -202,6 +212,8 @@ plot_3b_table |> ungroup() |>
     theme(axis.title.x = element_blank(), legend.position = "bottom", legend.title = element_blank()) +
   ylab("Immiger Welfare\nNew Coverage") 
 ```
+
+#### While there was a little change in the daily duration of immigration coverage between the pre-campaign and campaign periods, there was a significant increase after the inauguration, especially on FOX News. While there was a modest post-inauguration increase in immigration coverage on CNN and MSNBC, Fox New's average monthly number of immigration segments nearly doubled after the inauguration, from 303.5 to 545.3. This suggests that a substantial portion, if not all, of the news effects we measure can be attributed to stories originated from Fox and other forms of right-wing media, many of which are extremely anti-immigrants.
 
 ```{r importing daily data}
 daily <- read.csv("google-trends data/replicate data/gt_report_daily.csv") |> select(date, search, search_adj) |>  mutate(date=as.Date(date))
@@ -280,6 +292,8 @@ ggplot(prop_no_outlier, aes(x = president, y = mean, fill = president)) +
 
 ```
 
+#### Despite varying immigration policies across presidencies, the proportion of fear and success associated with immigration coverage remained consistent.
+
 ```{r}
 vs <- vs %>%
   mutate(ymd = ymd(paste0(ym, "-01")))
@@ -292,7 +306,7 @@ ggplot(data = vs, aes(x = ymd)) +
   
 ```
 
-
+#### After analyzing a new dataset focused on positive aspects of immigration, it's clear that the benefits of immigration are substantial and should not be overlooked. The data reveals numerous significant contributions of immigration, highlighting its vital role in various sectors and its overall positive impact on society.
 
 ```{r}
 
@@ -355,4 +369,3 @@ ggplot(map_data, aes(x = long, y = lat, group = group, fill = success)) +
   theme_minimal()
 
 ```
-
